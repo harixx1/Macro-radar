@@ -1,0 +1,333 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>MakroRadar Cyberpunk - Dashboard Penuh (Step 2)</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500&display=swap" rel="stylesheet">
+  <style>
+    body {
+      background: #000014;
+      color: white;
+      font-family: 'Orbitron', sans-serif;
+      padding: 20px;
+    }
+    h1 {
+      color: #00ffff;
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    h2 {
+      color: #00ffcc;
+      margin-top: 40px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+    }
+    .card {
+      background: rgba(0,0,0,0.6);
+      border-radius: 10px;
+      padding: 10px;
+      box-shadow: 0 0 10px #00ffff50;
+    }
+    .growth { border: 1px solid #00ffff; }
+    .inflation {
+
+    .labor {
+
+    .consumption {
+
+    .industry {
+
+    .housing {
+
+    .trade {
+
+    .money {
+
+    .interest {
+
+    .liquidity {
+
+    .financial {
+
+    .global { border: 1px solid #66ffcc; box-shadow: 0 0 10px #66ffcc60; }
+    .recession { border: 1px solid #ffaa66; box-shadow: 0 0 10px #ffaa6650; }
+ border: 1px solid #ffcc00; box-shadow: 0 0 10px #ffcc0040; }
+ border: 1px solid #00ccff; box-shadow: 0 0 10px #00ccff60; }
+ border: 1px solid #ff3399; box-shadow: 0 0 10px #ff339950; }
+ border: 1px solid #33ff99; box-shadow: 0 0 10px #33ff9940; }
+ border: 1px solid #ffaa00; box-shadow: 0 0 10px #ffaa0040; }
+ border: 1px solid #00ffff; box-shadow: 0 0 10px #00ffff50; }
+ border: 1px solid #ffcc00; box-shadow: 0 0 10px #ffcc0040; }
+ border: 1px solid #00ff99; box-shadow: 0 0 10px #00ff9940; }
+ border: 1px solid #ff00ff; box-shadow: 0 0 10px #ff00ff50; }
+ border: 1px solid #ff00cc; box-shadow: 0 0 10px #ff00cc40; }
+    
+    @media (max-width: 600px) {
+      h1, h2, h3 { font-size: 16px; }
+      .grid { grid-template-columns: 1fr; }
+      canvas { height: 160px !important; }
+    }
+    canvas {
+      max-width: 100%;
+      overflow-x: auto;
+    }
+
+    canvas {
+      width: 100%;
+      height: 140px;
+    }
+  </style>
+</head>
+<body>
+  <h1>MakroRadar Cyberpunk</h1>
+
+  <h2>Kategori: Pertumbuhan (Growth)</h2>
+  <div class="grid">
+    <div class="card growth"><h3>GDP</h3><canvas id="chartGDP"></canvas></div>
+    <div class="card growth"><h3>GNP</h3><canvas id="chartGNP"></canvas></div>
+    <div class="card growth"><h3>GDI</h3><canvas id="chartGDI"></canvas></div>
+    <div class="card growth"><h3>Final Sales to Domestic Purchaser</h3><canvas id="chartFINAL"></canvas></div>
+    <div class="card growth"><h3>Corporate Profits (After Tax)</h3><canvas id="chartCP"></canvas></div>
+  </div>
+
+  <h2>Kategori: Inflasi (Inflation)</h2>
+  <div class="grid">
+    <div class="card inflation"><h3>CPI (All Items)</h3><canvas id="chartCPIAUCNS"></canvas></div>
+    <div class="card inflation"><h3>Core CPI</h3><canvas id="chartCPILFESL"></canvas></div>
+    <div class="card inflation"><h3>PCE Price Index</h3><canvas id="chartPCEPI"></canvas></div>
+    <div class="card inflation"><h3>Core PCE</h3><canvas id="chartPCEPILFE"></canvas></div>
+    <div class="card inflation"><h3>GDP Deflator</h3><canvas id="chartGDPDEF"></canvas></div>
+    <div class="card inflation"><h3>PPI</h3><canvas id="chartPPIACO"></canvas></div>
+    <div class="card inflation"><h3>Trimmed Mean PCE</h3><canvas id="chartTRIMMED"></canvas></div>
+    <div class="card inflation"><h3>Median CPI</h3><canvas id="chartMEDCPIM"></canvas></div>
+    <div class="card inflation"><h3>Sticky CPI</h3><canvas id="chartSTICKY"></canvas></div>
+  </div>
+
+  <script>
+    const apiKey = "599085996fdad12bd567fd0b89343ba8";
+    const chartRefs = {};
+
+    const series = [
+      // Growth
+      { id: "chartGDP", series_id: "GDP", label: "GDP", color: "#00ffff" },
+      { id: "chartGNP", series_id: "GNPCA", label: "GNP", color: "#00ffcc" },
+      { id: "chartGDI", series_id: "GDI", label: "GDI", color: "#00ccff" },
+      { id: "chartFINAL", series_id: "LB0000131Q", label: "Final Sales", color: "#00cc99" },
+      { id: "chartCP", series_id: "CP", label: "Corp Profits", color: "#33ffcc" },
+      // Inflation
+      { id: "chartCPIAUCNS", series_id: "CPIAUCNS", label: "CPI", color: "#ff00cc" },
+      { id: "chartCPILFESL", series_id: "CPILFESL", label: "Core CPI", color: "#ff33cc" },
+      { id: "chartPCEPI", series_id: "PCEPI", label: "PCE", color: "#ff66cc" },
+      { id: "chartPCEPILFE", series_id: "PCEPILFE", label: "Core PCE", color: "#ff99cc" },
+      { id: "chartGDPDEF", series_id: "GDPDEF", label: "GDP Deflator", color: "#ffcccc" },
+      { id: "chartPPIACO", series_id: "PPIACO", label: "PPI", color: "#ffcc00" },
+      { id: "chartTRIMMED", series_id: "PCETRIM12M159SFRBDAL", label: "Trimmed PCE", color: "#ff9999" },
+      { id: "chartMEDCPIM", series_id: "MEDCPIM158SFRBCLE", label: "Median CPI", color: "#ff9966" },
+      { id: "chartSTICKY", series_id: "STICKCPIM158SFRBATL", label: "Sticky CPI", color: "#ff9933" }
+    ];
+
+    function createChart(id, label, data, color) {
+      const ctx = document.getElementById(id).getContext("2d");
+      if (chartRefs[id]) chartRefs[id].destroy();
+      chartRefs[id] = new Chart(ctx, {
+        type: "line",
+        data: {
+          labels: data.map(d => d.date),
+          datasets: [{
+            label,
+            data: data.map(d => parseFloat(d.value)),
+            borderColor: color,
+            borderWidth: 2,
+            fill: false
+          }]
+        },
+        options: {
+          plugins: { legend: { display: false }},
+          scales: {
+            x: { ticks: { color: "white" }, grid: { color: "#444" }},
+            y: { ticks: { color: "white" }, grid: { color: "#444" }}
+          }
+        }
+      });
+    }
+
+    series.push
+      { id: "chartUNRATE", series_id: "UNRATE", label: "Unemployment", color: "#ff00ff" },
+      { id: "chartCIVPART", series_id: "CIVPART", label: "Participation Rate", color: "#ff33ff" },
+      { id: "chartEMRATIO", series_id: "EMRATIO", label: "Emp-Pop Ratio", color: "#ff66ff" },
+      { id: "chartPAYEMS", series_id: "PAYEMS", label: "NFP", color: "#ff00ff" },
+      { id: "chartAHE", series_id: "CES0500000003", label: "Avg Hourly Earnings", color: "#ff66ff" },
+      { id: "chartICSA", series_id: "ICSA", label: "Initial Claims", color: "#ff00ff" },
+      { id: "chartJTSJOL", series_id: "JTSJOL", label: "Job Openings", color: "#ff66cc" },
+      { id: "chartJTSQUR", series_id: "JTSQUR", label: "Quit Rate", color: "#ff99ff" },
+
+
+series.push
+      { id: "chartPCE", series_id: "PCE", label: "PCE", color: "#00ff99" },
+      { id: "chartPCEC96", series_id: "PCEC96", label: "Real PCE", color: "#00ffcc" },
+      { id: "chartRSXFS", series_id: "RSXFS", label: "Retail Sales", color: "#33ffcc" },
+      { id: "chartRSAFS", series_id: "RSAFS", label: "Retail Sales YoY", color: "#00ffcc" },
+      { id: "chartUMCSENT", series_id: "UMCSENT", label: "Consumer Sentiment", color: "#33ffcc" },
+
+
+series.push
+      { id: "chartINDPRO", series_id: "INDPRO", label: "Industrial Production", color: "#ffcc00" },
+      { id: "chartTCU", series_id: "TCU", label: "Capacity Utilization", color: "#ffee00" },
+      { id: "chartNAPM", series_id: "NAPM", label: "ISM Manufacturing PMI", color: "#ffdd66" },
+
+
+series.push
+      { id: "chartUSSTHPI", series_id: "USSTHPI", label: "House Price Index", color: "#00ffff" },
+      { id: "chartHOUST", series_id: "HOUST", label: "Housing Starts", color: "#33ccff" },
+      { id: "chartPERMIT", series_id: "PERMIT", label: "Building Permits", color: "#00ccff" },
+      { id: "chartHSN1F", series_id: "HSN1F", label: "New Home Sales", color: "#00ffff" },
+      { id: "chartEXHOSLUSM495S", series_id: "EXHOSLUSM495S", label: "Existing Home Sales", color: "#33ccff" },
+      { id: "chartMORTGAGE30US", series_id: "MORTGAGE30US", label: "Mortgage Rate", color: "#00ccff" },
+
+
+series.push
+      { id: "chartNETEXP", series_id: "NETEXP", label: "Net Exports", color: "#ffaa00" },
+      { id: "chartEXPGS", series_id: "EXPGS", label: "Exports", color: "#ffcc00" },
+      { id: "chartIMPGS", series_id: "IMPGS", label: "Imports", color: "#ffee00" },
+
+
+series.push
+      { id: "chartM2SL", series_id: "M2SL", label: "M2 Money Supply", color: "#33ff99" },
+      { id: "chartBOGMBASE", series_id: "BOGMBASE", label: "Monetary Base", color: "#66ffaa" },
+      { id: "chartCURRCIR", series_id: "CURRCIR", label: "Currency in Circulation", color: "#33ffcc" },
+      { id: "chartWRBWFRBL", series_id: "WRBWFRBL", label: "Reserve Balances", color: "#66ffff" },
+
+
+series.push
+      { id: "chartFEDFUNDS", series_id: "FEDFUNDS", label: "Fed Funds", color: "#ff3399" },
+      { id: "chartGS2", series_id: "GS2", label: "2Y Treasury", color: "#ff66cc" },
+      { id: "chartGS10", series_id: "GS10", label: "10Y Treasury", color: "#ff99cc" },
+      { id: "chartGS30", series_id: "GS30", label: "30Y Treasury", color: "#ffccff" },
+
+
+series.push
+      { id: "chartWALCL", series_id: "WALCL", label: "Fed Balance Sheet", color: "#00ccff" },
+      { id: "chartRRPONTSYD", series_id: "RRPONTSYD", label: "Reverse Repo (RRP)", color: "#33ddff" },
+
+
+series.push
+      { id: "chartSP500", series_id: "SP500", label: "S&P 500", color: "#ffcc00" },
+      { id: "chartVIXCLS", series_id: "VIXCLS", label: "VIX Index", color: "#ffaa00" },
+      { id: "chartBAMLH0A0HYM2", series_id: "BAMLH0A0HYM2", label: "High Yield Spread", color: "#ff8800" },
+
+
+series.push
+      { id: "chartPMIGLODIQ", series_id: "PMIGLODIQ", label: "Global PMI", color: "#66ffcc" },
+      { id: "chartG7LOLITOAASTSAM", series_id: "G7LOLITOAASTSAM", label: "OECD G7", color: "#33ffaa" },
+      { id: "chartUSRECD", series_id: "USRECD", label: "NBER Recession", color: "#ffaa00" },
+      { id: "chartSAHMCURRENT", series_id: "SAHMCURRENT", label: "Sahm Rule", color: "#ff9966" },
+
+
+series.forEach(s => {
+      fetch(`https://api.stlouisfed.org/fred/series/observations?series_id=${s.series_id}&api_key=${apiKey}&file_type=json`)
+        .then(res => res.json())
+        .then(data => {
+          const latest = data.observations.slice(-6).filter(d => d.value !== "." && !isNaN(d.value));
+          createChart(s.id, s.label, latest, s.color);
+        });
+    });
+  </script>
+
+  <h2>Kategori: Tenaga Kerja (Labor)</h2>
+  <div class="grid">
+    <div class="card labor"><h3>Unemployment Rate</h3><canvas id="chartUNRATE"></canvas></div>
+    <div class="card labor"><h3>Labor Force Participation</h3><canvas id="chartCIVPART"></canvas></div>
+    <div class="card labor"><h3>Employment-Population Ratio</h3><canvas id="chartEMRATIO"></canvas></div>
+    <div class="card labor"><h3>Nonfarm Payrolls (NFP)</h3><canvas id="chartPAYEMS"></canvas></div>
+    <div class="card labor"><h3>Avg Hourly Earnings</h3><canvas id="chartAHE"></canvas></div>
+    <div class="card labor"><h3>Initial Jobless Claims</h3><canvas id="chartICSA"></canvas></div>
+    <div class="card labor"><h3>Job Openings (JOLTS)</h3><canvas id="chartJTSJOL"></canvas></div>
+    <div class="card labor"><h3>Quit Rate (JOLTS)</h3><canvas id="chartJTSQUR"></canvas></div>
+  </div>
+
+
+  <h2>Kategori: Konsumsi (Consumption)</h2>
+  <div class="grid">
+    <div class="card consumption"><h3>PCE</h3><canvas id="chartPCE"></canvas></div>
+    <div class="card consumption"><h3>Real PCE</h3><canvas id="chartPCEC96"></canvas></div>
+    <div class="card consumption"><h3>Retail Sales (Ex Auto)</h3><canvas id="chartRSXFS"></canvas></div>
+    <div class="card consumption"><h3>Retail Sales YoY</h3><canvas id="chartRSAFS"></canvas></div>
+    <div class="card consumption"><h3>Consumer Sentiment (UMich)</h3><canvas id="chartUMCSENT"></canvas></div>
+  </div>
+
+
+  <h2>Kategori: Industri (Industry)</h2>
+  <div class="grid">
+    <div class="card industry"><h3>Industrial Production</h3><canvas id="chartINDPRO"></canvas></div>
+    <div class="card industry"><h3>Capacity Utilization</h3><canvas id="chartTCU"></canvas></div>
+    <div class="card industry"><h3>ISM Manufacturing PMI</h3><canvas id="chartNAPM"></canvas></div>
+  </div>
+
+
+  <h2>Kategori: Perumahan (Housing)</h2>
+  <div class="grid">
+    <div class="card housing"><h3>House Price Index</h3><canvas id="chartUSSTHPI"></canvas></div>
+    <div class="card housing"><h3>Housing Starts</h3><canvas id="chartHOUST"></canvas></div>
+    <div class="card housing"><h3>Building Permits</h3><canvas id="chartPERMIT"></canvas></div>
+    <div class="card housing"><h3>New Home Sales</h3><canvas id="chartHSN1F"></canvas></div>
+    <div class="card housing"><h3>Existing Home Sales</h3><canvas id="chartEXHOSLUSM495S"></canvas></div>
+    <div class="card housing"><h3>Mortgage Rate (30Y)</h3><canvas id="chartMORTGAGE30US"></canvas></div>
+  </div>
+
+
+  <h2>Kategori: Perdagangan (Trade)</h2>
+  <div class="grid">
+    <div class="card trade"><h3>Trade Balance (Net Exports)</h3><canvas id="chartNETEXP"></canvas></div>
+    <div class="card trade"><h3>Exports</h3><canvas id="chartEXPGS"></canvas></div>
+    <div class="card trade"><h3>Imports</h3><canvas id="chartIMPGS"></canvas></div>
+  </div>
+
+
+  <h2>Kategori: Moneter (Money Supply)</h2>
+  <div class="grid">
+    <div class="card money"><h3>M2 Money Supply</h3><canvas id="chartM2SL"></canvas></div>
+    <div class="card money"><h3>Monetary Base</h3><canvas id="chartBOGMBASE"></canvas></div>
+    <div class="card money"><h3>Currency in Circulation</h3><canvas id="chartCURRCIR"></canvas></div>
+    <div class="card money"><h3>Reserve Balances</h3><canvas id="chartWRBWFRBL"></canvas></div>
+  </div>
+
+
+  <h2>Kategori: Suku Bunga & Treasury</h2>
+  <div class="grid">
+    <div class="card interest"><h3>Fed Funds Rate</h3><canvas id="chartFEDFUNDS"></canvas></div>
+    <div class="card interest"><h3>2Y Treasury Yield</h3><canvas id="chartGS2"></canvas></div>
+    <div class="card interest"><h3>10Y Treasury Yield</h3><canvas id="chartGS10"></canvas></div>
+    <div class="card interest"><h3>30Y Treasury Yield</h3><canvas id="chartGS30"></canvas></div>
+  </div>
+
+
+  <h2>Kategori: Likuiditas & Balance Sheet The Fed</h2>
+  <div class="grid">
+    <div class="card liquidity"><h3>Total Assets (Fed Balance Sheet)</h3><canvas id="chartWALCL"></canvas></div>
+    <div class="card liquidity"><h3>Reverse Repo Operations (RRP)</h3><canvas id="chartRRPONTSYD"></canvas></div>
+  </div>
+
+
+  <h2>Kategori: Pasar Keuangan & Volatilitas</h2>
+  <div class="grid">
+    <div class="card financial"><h3>S&P 500 Index</h3><canvas id="chartSP500"></canvas></div>
+    <div class="card financial"><h3>VIX Volatility Index</h3><canvas id="chartVIXCLS"></canvas></div>
+    <div class="card financial"><h3>High Yield Spread</h3><canvas id="chartBAMLH0A0HYM2"></canvas></div>
+  </div>
+
+
+  <h2>Kategori: Indikator Global & Resesi</h2>
+  <div class="grid">
+    <div class="card global"><h3>Global PMI</h3><canvas id="chartPMIGLODIQ"></canvas></div>
+    <div class="card global"><h3>OECD Leading Indicator (G7)</h3><canvas id="chartG7LOLITOAASTSAM"></canvas></div>
+    <div class="card recession"><h3>NBER Recession Indicator</h3><canvas id="chartUSRECD"></canvas></div>
+    <div class="card recession"><h3>Sahm Rule Recession</h3><canvas id="chartSAHMCURRENT"></canvas></div>
+  </div>
+
+</body>
+</html>
